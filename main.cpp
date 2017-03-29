@@ -37,20 +37,25 @@ int main()
 
     int mbedtls_entropy_func( void *data, unsigned char *output, size_t len );
 
+    /* Init random test suite. */
     rt_init(0);
 
-    /* Collect bytes to test entropy of the source. */
+    /* Collect bytes to tests of the source. */
     for (uint32_t i = 0; i < ENT_SAMPLES; ++i)
     {
+        /* Wait for random value. */
         while (mbedtls_entropy_func(&entropy, &rnd_val, 1) != 0);
+        /* Add value to the tests pool. */
         rt_add(&rnd_val, 1);
+        /* Print something sometimes to get developers know that everything works. */
         if (i % 100 == 0)
         {
             mbedtls_printf("Collected %lu bytes.\n", i);
+            led1 = !led1;
         }
-        led1 = !led1;
     }
 
+    /* Finish tests and prepare values for printing. */
     rt_end(&ent, &chisq, &mean, &montepi, &scc);
 
     /* Calculate probability of observed distribution occurring from
@@ -58,6 +63,7 @@ int main()
 
     chip = pochisq(chisq, 255);
 
+    /* Show out interesting numbers. */
     mbedtls_printf("Entropy = %f bits per byte.\n", ent);
     mbedtls_printf("\nOptimum compression would reduce the size\n");
     mbedtls_printf("of this %d byte file by %d percent.\n\n", ENT_SAMPLES, (short) ((100 * ( 8 - ent) / (8.0))));
